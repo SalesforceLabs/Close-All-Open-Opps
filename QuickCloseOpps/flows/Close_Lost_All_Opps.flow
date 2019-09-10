@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <assignments>
+        <description>Add the formatted opportunity name {!OppNameTextTemplate} to a text variable that will hold the bulleted list of opportunity names.
+Add the Loop variable (the current record being evaluated in the loop) to a collection {!OppsToClose} of opportunities that will be closed at the end of the loop.</description>
+        <name>Add_to_Collection</name>
+        <label>Add to Collection</label>
+        <locationX>456</locationX>
+        <locationY>226</locationY>
+        <assignmentItems>
+            <assignToReference>OppsToClose</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>LoopVar</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>ListofClosedOppNames</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>OppNameTextTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_Through_Opps</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Change the stage of the current opportunity in the loop to &quot;Closed Lost&quot;</description>
+        <name>Make_Close_Lost</name>
+        <label>Make Close Lost</label>
+        <locationX>559</locationX>
+        <locationY>53</locationY>
+        <assignmentItems>
+            <assignToReference>LoopVar.StageName</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Closed Lost</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Add_to_Collection</targetReference>
+        </connector>
+    </assignments>
+    <description>Change the Stage on all open opportunities on a particular account to Closed Lost using a Quick Action on the Account record.</description>
+    <interviewLabel>Close Lost All Opps {!$Flow.CurrentDateTime}</interviewLabel>
+    <isTemplate>true</isTemplate>
+    <label>Close Lost All Opps</label>
+    <loops>
+        <description>Initiate a loop to look through all the opportunities that you collected in the previous element one by one.</description>
+        <name>Loop_Through_Opps</name>
+        <label>Loop Through Opps</label>
+        <locationX>351</locationX>
+        <locationY>50</locationY>
+        <assignNextValueToReference>LoopVar</assignNextValueToReference>
+        <collectionReference>OpenOpps</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Make_Close_Lost</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Update_Records</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <recordLookups>
+        <description>Get all of the opportunities on this account that are open (is lost = false).  Store the record ids and names in a record</description>
+        <name>Get_Opportunities</name>
+        <label>Get All Open Opps</label>
+        <locationX>200</locationX>
+        <locationY>50</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Loop_Through_Opps</targetReference>
+        </connector>
+        <filters>
+            <field>AccountId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>recordId</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>IsClosed</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Opportunity</object>
+        <outputReference>OpenOpps</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>Name</queriedFields>
+    </recordLookups>
+    <recordUpdates>
+        <description>After the last opportunity is evaluated in the loop, update all of the opps in the collection {!OppsToClose} at once.</description>
+        <name>Update_Records</name>
+        <label>Close the opps</label>
+        <locationX>349</locationX>
+        <locationY>385</locationY>
+        <connector>
+            <targetReference>Closed_Opps_List_Screen</targetReference>
+        </connector>
+        <inputReference>OppsToClose</inputReference>
+    </recordUpdates>
+    <screens>
+        <description>Screen to show the user which opportunities were closed.</description>
+        <name>Closed_Opps_List_Screen</name>
+        <label>Closed Opps List Screen</label>
+        <locationX>552</locationX>
+        <locationY>385</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>DisplayList</name>
+            <fieldText>&lt;p&gt;The following opportunities were marked closed lost:&lt;/p&gt;&lt;p&gt;{!ListofClosedOppNames}&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <startElementReference>Get_Opportunities</startElementReference>
+    <status>Active</status>
+    <textTemplates>
+        <description>Bullet point format for the opportunity name when it is added to the list that is displayed on the final screen.</description>
+        <name>OppNameTextTemplate</name>
+        <text>&lt;TEXTFORMAT LEADING=&quot;2&quot;&gt;&lt;LI&gt;{!LoopVar.Name}&lt;/FONT&gt;&lt;/LI&gt;&lt;/TEXTFORMAT&gt;</text>
+    </textTemplates>
+    <variables>
+        <description>Text which displays the list of closed opportunities at the end of the Flow. Data is assigned to this variable using the text template {!OppNameTextTemplate}.</description>
+        <name>ListofClosedOppNames</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>LoopVar</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Opportunity</objectType>
+    </variables>
+    <variables>
+        <name>OpenOpps</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Opportunity</objectType>
+    </variables>
+    <variables>
+        <name>OppsToClose</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Opportunity</objectType>
+    </variables>
+    <variables>
+        <name>recordId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>
