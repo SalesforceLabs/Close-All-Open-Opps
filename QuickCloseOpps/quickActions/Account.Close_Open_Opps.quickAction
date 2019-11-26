@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <QuickAction xmlns="http://soap.sforce.com/2006/04/metadata">
     <description>Mark all open opps on this account closed lost.</description>
-    <flowDefinition>Close_Lost_All_Opps</flowDefinition>
+    <flowDefinition>Close_Lost_all_Open_Opps_on_an_Account</flowDefinition>
     <label>Close Open Opps</label>
     <optionsCreateFeedItem>false</optionsCreateFeedItem>
     <type>Flow</type>

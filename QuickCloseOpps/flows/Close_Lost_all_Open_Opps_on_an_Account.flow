@@ -3,17 +3,10 @@
     <assignments>
         <description>Add the formatted opportunity name {!OppNameTextTemplate} to a text variable that will hold the bulleted list of opportunity names.
 Add the Loop variable (the current record being evaluated in the loop) to a collection {!OppsToClose} of opportunities that will be closed at the end of the loop.</description>
-        <name>Add_to_Collection</name>
-        <label>Add to Collection</label>
-        <locationX>456</locationX>
-        <locationY>226</locationY>
-        <assignmentItems>
-            <assignToReference>OppsToClose</assignToReference>
-            <operator>Add</operator>
-            <value>
-                <elementReference>LoopVar</elementReference>
-            </value>
-        </assignmentItems>
+        <name>Add_to_collection</name>
+        <label>Add to collection</label>
+        <locationX>519</locationX>
+        <locationY>310</locationY>
         <assignmentItems>
             <assignToReference>ListofClosedOppNames</assignToReference>
             <operator>Add</operator>
@@ -21,16 +14,23 @@ Add the Loop variable (the current record being evaluated in the loop) to a coll
                 <elementReference>OppNameTextTemplate</elementReference>
             </value>
         </assignmentItems>
+        <assignmentItems>
+            <assignToReference>OppsToClose</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>LoopVar</elementReference>
+            </value>
+        </assignmentItems>
         <connector>
-            <targetReference>Loop_Through_Opps</targetReference>
+            <targetReference>Loop_Through_Open_Opps</targetReference>
         </connector>
     </assignments>
     <assignments>
         <description>Change the stage of the current opportunity in the loop to &quot;Closed Lost&quot;</description>
-        <name>Make_Close_Lost</name>
-        <label>Make Close Lost</label>
-        <locationX>559</locationX>
-        <locationY>53</locationY>
+        <name>Mark_Opp_Closed_Lost</name>
+        <label>Mark Opp Closed Lost</label>
+        <locationX>519</locationX>
+        <locationY>172</locationY>
         <assignmentItems>
             <assignToReference>LoopVar.StageName</assignToReference>
             <operator>Assign</operator>
@@ -39,27 +39,26 @@ Add the Loop variable (the current record being evaluated in the loop) to a coll
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Add_to_Collection</targetReference>
+            <targetReference>Add_to_collection</targetReference>
         </connector>
     </assignments>
-    <description>Change the Stage on all open opportunities on a particular account to Closed Lost using a Quick Action on the Account record.</description>
-    <interviewLabel>Close Lost All Opps {!$Flow.CurrentDateTime}</interviewLabel>
-    <isTemplate>true</isTemplate>
-    <label>Close Lost All Opps</label>
+    <description>Change the Stage on all open opportunities on a particular account to Closed Lost using a Quick Action on the Account record. This version includes a confirmation screen before the records are modified.</description>
+    <interviewLabel>Close Lost all Open Opps on an Account {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Close Lost all Open Opps on an Account</label>
     <loops>
         <description>Initiate a loop to look through all the opportunities that you collected in the previous element one by one.</description>
-        <name>Loop_Through_Opps</name>
-        <label>Loop Through Opps</label>
-        <locationX>351</locationX>
-        <locationY>50</locationY>
+        <name>Loop_Through_Open_Opps</name>
+        <label>Loop Through Open Opps</label>
+        <locationX>297</locationX>
+        <locationY>242</locationY>
         <assignNextValueToReference>LoopVar</assignNextValueToReference>
         <collectionReference>OpenOpps</collectionReference>
         <iterationOrder>Asc</iterationOrder>
         <nextValueConnector>
-            <targetReference>Make_Close_Lost</targetReference>
+            <targetReference>Mark_Opp_Closed_Lost</targetReference>
         </nextValueConnector>
         <noMoreValuesConnector>
-            <targetReference>Update_Records</targetReference>
+            <targetReference>confirmScreen</targetReference>
         </noMoreValuesConnector>
     </loops>
     <processMetadataValues>
@@ -77,13 +76,13 @@ Add the Loop variable (the current record being evaluated in the loop) to a coll
     <processType>Flow</processType>
     <recordLookups>
         <description>Get all of the opportunities on this account that are open (is lost = false).  Store the record ids and names in a record</description>
-        <name>Get_Opportunities</name>
+        <name>Get_All_Open_Opps</name>
         <label>Get All Open Opps</label>
-        <locationX>200</locationX>
+        <locationX>297</locationX>
         <locationY>50</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Loop_Through_Opps</targetReference>
+            <targetReference>Loop_Through_Open_Opps</targetReference>
         </connector>
         <filters>
             <field>AccountId</field>
@@ -103,13 +102,15 @@ Add the Loop variable (the current record being evaluated in the loop) to a coll
         <outputReference>OpenOpps</outputReference>
         <queriedFields>Id</queriedFields>
         <queriedFields>Name</queriedFields>
+        <sortField>CloseDate</sortField>
+        <sortOrder>Asc</sortOrder>
     </recordLookups>
     <recordUpdates>
         <description>After the last opportunity is evaluated in the loop, update all of the opps in the collection {!OppsToClose} at once.</description>
-        <name>Update_Records</name>
+        <name>Close_the_opps</name>
         <label>Close the opps</label>
-        <locationX>349</locationX>
-        <locationY>385</locationY>
+        <locationX>298</locationX>
+        <locationY>560</locationY>
         <connector>
             <targetReference>Closed_Opps_List_Screen</targetReference>
         </connector>
@@ -119,20 +120,46 @@ Add the Loop variable (the current record being evaluated in the loop) to a coll
         <description>Screen to show the user which opportunities were closed.</description>
         <name>Closed_Opps_List_Screen</name>
         <label>Closed Opps List Screen</label>
-        <locationX>552</locationX>
-        <locationY>385</locationY>
-        <allowBack>true</allowBack>
+        <locationX>605</locationX>
+        <locationY>560</locationY>
+        <allowBack>false</allowBack>
         <allowFinish>true</allowFinish>
-        <allowPause>true</allowPause>
+        <allowPause>false</allowPause>
         <fields>
             <name>DisplayList</name>
-            <fieldText>&lt;p&gt;The following opportunities were marked closed lost:&lt;/p&gt;&lt;p&gt;{!ListofClosedOppNames}&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;The following opportunities were marked closed lost:&lt;/p&gt;&lt;p&gt;{!ListofClosedOppNames}&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
         </fields>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>
-    <startElementReference>Get_Opportunities</startElementReference>
+    <screens>
+        <description>Confirm that the user wants to quickly close all of these opportunities.</description>
+        <name>confirmScreen</name>
+        <label>confirmScreen</label>
+        <locationX>298</locationX>
+        <locationY>422</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Close_the_opps</targetReference>
+        </connector>
+        <fields>
+            <name>ConfirmQuestion</name>
+            <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 18px;&quot;&gt;Are you sure?&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Click &lt;b&gt;Next&lt;/b&gt; to mark the following opportunities &lt;b&gt;Closed Lost&lt;/b&gt;.&lt;/p&gt;&lt;p&gt;{!ListofClosedOppNames}&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <start>
+        <locationX>50</locationX>
+        <locationY>50</locationY>
+        <connector>
+            <targetReference>Get_All_Open_Opps</targetReference>
+        </connector>
+    </start>
     <status>Active</status>
     <textTemplates>
         <description>Bullet point format for the opportunity name when it is added to the list that is displayed on the final screen.</description>
@@ -148,6 +175,7 @@ Add the Loop variable (the current record being evaluated in the loop) to a coll
         <isOutput>true</isOutput>
     </variables>
     <variables>
+        <description>The LoopVar holds the information about the particular record being evaluated in the loop for each go round.</description>
         <name>LoopVar</name>
         <dataType>SObject</dataType>
         <isCollection>false</isCollection>
@@ -156,6 +184,7 @@ Add the Loop variable (the current record being evaluated in the loop) to a coll
         <objectType>Opportunity</objectType>
     </variables>
     <variables>
+        <description>All open opportunities on this account.</description>
         <name>OpenOpps</name>
         <dataType>SObject</dataType>
         <isCollection>true</isCollection>
@@ -164,6 +193,7 @@ Add the Loop variable (the current record being evaluated in the loop) to a coll
         <objectType>Opportunity</objectType>
     </variables>
     <variables>
+        <description>All opportunities that have been modified and the changes are ready to be committed to the database.</description>
         <name>OppsToClose</name>
         <dataType>SObject</dataType>
         <isCollection>true</isCollection>
@@ -172,6 +202,7 @@ Add the Loop variable (the current record being evaluated in the loop) to a coll
         <objectType>Opportunity</objectType>
     </variables>
     <variables>
+        <description>The quick action button sends the ID of the Account to this variable.</description>
         <name>recordId</name>
         <dataType>String</dataType>
         <isCollection>false</isCollection>
